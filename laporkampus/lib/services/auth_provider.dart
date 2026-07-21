@@ -31,8 +31,10 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> register(
       String name, String email, String password, String confirm) async {
-    _user = await _api.register(name, email, password, confirm);
-    notifyListeners();
+    // Panggil API register di sini
+    await _api.register(name, email, password, confirm);
+    // JANGAN simpan token atau set _isAuthenticated = true di sini!
+    // Cukup return tanpa mengubah state login.
   }
 
   Future<void> logout() async {

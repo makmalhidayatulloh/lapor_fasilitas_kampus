@@ -31,7 +31,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
             _passwordCtrl.text,
             _confirmCtrl.text,
           );
-      if (mounted) Navigator.pop(context);
+
+      if (!mounted) return;
+
+      // Cukup pop kembali ke LoginScreen (yang sudah ditampilkan oleh
+      // RootRouter di main.dart). JANGAN push route baru di sini,
+      // karena RootRouter yang mengatur perpindahan Login <-> Home
+      // berdasarkan status AuthProvider.
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registrasi berhasil. Silakan login.'),
+        ),
+      );
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('ApiException: ', ''));
     } finally {
