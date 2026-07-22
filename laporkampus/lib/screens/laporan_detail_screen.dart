@@ -102,8 +102,42 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (laporan.fotoUrl != null)
-                  Image.network(laporan.fotoUrl!,
-                      width: double.infinity, height: 260, fit: BoxFit.cover),
+                  Image.network(
+                    laporan.fotoUrl!,
+                    width: double.infinity,
+                    height: 260,
+                    fit: BoxFit.cover,
+                    // Sebelumnya tidak ada errorBuilder, jadi kalau foto
+                    // gagal dimuat (mis. URL salah/tidak bisa diakses),
+                    // tampilannya cuma jadi kosong-hitam tanpa keterangan
+                    // apa-apa (persis seperti yang terlihat di screenshot).
+                    // Sekarang kalau gagal, tampilkan pesan yang jelas.
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        width: double.infinity,
+                        height: 260,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                            child: CircularProgressIndicator()),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: double.infinity,
+                      height: 260,
+                      color: Colors.grey.shade200,
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.broken_image_outlined,
+                              size: 40, color: Colors.grey),
+                          SizedBox(height: 8),
+                          Text('Foto gagal dimuat',
+                              style: TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
