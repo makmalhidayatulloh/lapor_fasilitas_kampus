@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/laporan.dart';
 import '../services/api_service.dart';
 import '../services/auth_provider.dart';
+import '../services/theme_provider.dart';
 import '../widgets/laporan_card.dart';
 import 'create_laporan_screen.dart';
 import 'laporan_detail_screen.dart';
@@ -35,11 +36,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     final isAdmin = user?.isAdmin ?? false;
+    final isDarkMode = context.watch<ThemeProvider>().isDarkMode;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isAdmin ? 'Semua Laporan (Admin)' : 'Laporan Saya'),
         actions: [
+          IconButton(
+            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            tooltip: isDarkMode ? 'Mode Terang' : 'Mode Gelap',
+            onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Keluar',

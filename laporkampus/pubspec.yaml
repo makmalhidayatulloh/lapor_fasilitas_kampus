@@ -27,7 +27,7 @@ dependencies:
   # Permintaan izin kamera & lokasi
   permission_handler: ^11.3.1
 
-  # Simpan token login secara lokal & persisten
+  # Simpan token login secara lokal & persisten (dipakai juga untuk dark mode)
   shared_preferences: ^2.2.3
 
   # Format tanggal

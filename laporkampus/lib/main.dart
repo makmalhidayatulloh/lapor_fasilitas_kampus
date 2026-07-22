@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_provider.dart';
+import 'services/theme_provider.dart';
 
 void main() {
   runApp(const LaporFasilkamApp());
@@ -13,17 +14,32 @@ class LaporFasilkamApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
-      child: MaterialApp(
-        title: 'LaporFasilkam',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorSchemeSeed: Colors.indigo,
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(centerTitle: true),
-        ),
-        home: const RootRouter(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'LaporFasilkam',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorSchemeSeed: Colors.indigo,
+              brightness: Brightness.light,
+              useMaterial3: true,
+              appBarTheme: const AppBarTheme(centerTitle: true),
+            ),
+            darkTheme: ThemeData(
+              colorSchemeSeed: Colors.indigo,
+              brightness: Brightness.dark,
+              useMaterial3: true,
+              appBarTheme: const AppBarTheme(centerTitle: true),
+            ),
+            themeMode: themeProvider.themeMode,
+            home: const RootRouter(),
+          );
+        },
       ),
     );
   }
