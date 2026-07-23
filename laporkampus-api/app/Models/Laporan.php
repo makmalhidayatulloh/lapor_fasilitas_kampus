@@ -39,21 +39,19 @@ class Laporan extends Model
             return null;
         }
 
-        // Storage::disk('public')->url() membangun URL memakai APP_URL di .env
-        // (mis. "http://localhost/storage/xxx.jpg"). Masalahnya, "localhost"
-        // itu valid buat browser di laptop kamu, tapi TIDAK valid untuk HP
-        // fisik yang mengakses API lewat tunnel ngrok — di HP, "localhost"
-        // artinya HP itu sendiri, bukan laptop kamu. Makanya foto gagal
-        // dimuat walau data lain (judul, deskripsi, dst) tetap tampil normal.
+        // Diarahkan ke route /foto/{path} (lihat routes/api.php), BUKAN ke
+        // /storage/{path} (symlink). Alasannya: `php artisan serve` (PHP
+        // built-in server) menolak (403 Forbidden) file yang diakses lewat
+        // symbolic link, jadi jalur /storage/... tidak bisa diandalkan di
+        // environment ini. Route /foto/{path} men-serve file yang sama
+        // tapi lewat Laravel langsung, jadi tetap jalan di php artisan
+        // serve maupun web server lain (Apache/Nginx/dll).
         //
-        // Solusinya: ambil path relatifnya saja ("/storage/xxx.jpg"), lalu
-        // tempelkan ke host yang BENAR-BENAR sedang dipakai untuk mengakses
-        // API saat itu (otomatis terbaca dari request masuk, jadi tetap
-        // benar walau URL ngrok berubah setiap kali kamu restart ngrok,
-        // tanpa perlu edit APP_URL manual tiap saat).
-        $path = parse_url(Storage::disk('public')->url($this->foto_path), PHP_URL_PATH);
+        // Host-nya tetap diambil dari request yang sedang berjalan (bukan
+        // APP_URL statis di .env), supaya otomatis benar walau URL ngrok
+        // berubah tiap kali di-restart.
         $host = request()?->getSchemeAndHttpHost() ?? rtrim(config('app.url'), '/');
 
-        return $host . $path;
+        return $host . '/api/foto/' . $this->foto_path;
     }
 }
