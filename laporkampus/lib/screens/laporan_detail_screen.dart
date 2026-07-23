@@ -1,10 +1,90 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/laporan.dart';
 import '../services/api_service.dart';
 import '../services/auth_provider.dart';
 import '../widgets/status_badge.dart';
+
+// Widget kecil untuk memuat foto laporan.
+// Dipakai alih-alih Image.network langsung, karena Image.network di
+// Flutter Web merender lewat tag <img> HTML biasa yang TIDAK BISA
+// menyertakan header custom. Padahal header 'ngrok-skip-browser-warning'
+// wajib dikirim supaya ngrok (free tier) tidak membalas dengan halaman
+// peringatan HTML alih-alih file gambar aslinya.
+// Solusinya: ambil bytes gambar manual pakai package http (yang bisa
+// menyertakan header), lalu render pakai Image.memory.
+class _LaporanFoto extends StatefulWidget {
+  final String url;
+  const _LaporanFoto({required this.url});
+
+  @override
+  State<_LaporanFoto> createState() => _LaporanFotoState();
+}
+
+class _LaporanFotoState extends State<_LaporanFoto> {
+  late Future<Uint8List> _futureBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureBytes = _fetchBytes();
+  }
+
+  Future<Uint8List> _fetchBytes() async {
+    final response = await http.get(
+      Uri.parse(widget.url),
+      headers: {'ngrok-skip-browser-warning': 'true'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Gagal memuat foto (status ${response.statusCode})');
+    }
+    return response.bodyBytes;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List>(
+      future: _futureBytes,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            width: double.infinity,
+            height: 260,
+            color: Colors.grey.shade200,
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError || !snapshot.hasData) {
+          debugPrint('GAGAL LOAD FOTO: ${snapshot.error}');
+          debugPrint('URL yang dicoba: ${widget.url}');
+          return Container(
+            width: double.infinity,
+            height: 260,
+            color: Colors.grey.shade200,
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
+                SizedBox(height: 8),
+                Text('Foto gagal dimuat', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          );
+        }
+        return Image.memory(
+          snapshot.data!,
+          width: double.infinity,
+          height: 260,
+          fit: BoxFit.cover,
+        );
+      },
+    );
+  }
+}
 
 class LaporanDetailScreen extends StatefulWidget {
   final int laporanId;
@@ -102,42 +182,7 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (laporan.fotoUrl != null)
-                  Image.network(
-                    laporan.fotoUrl!,
-                    width: double.infinity,
-                    height: 260,
-                    fit: BoxFit.cover,
-                    // Sebelumnya tidak ada errorBuilder, jadi kalau foto
-                    // gagal dimuat (mis. URL salah/tidak bisa diakses),
-                    // tampilannya cuma jadi kosong-hitam tanpa keterangan
-                    // apa-apa (persis seperti yang terlihat di screenshot).
-                    // Sekarang kalau gagal, tampilkan pesan yang jelas.
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return Container(
-                        width: double.infinity,
-                        height: 260,
-                        color: Colors.grey.shade200,
-                        child: const Center(
-                            child: CircularProgressIndicator()),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: double.infinity,
-                      height: 260,
-                      color: Colors.grey.shade200,
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.broken_image_outlined,
-                              size: 40, color: Colors.grey),
-                          SizedBox(height: 8),
-                          Text('Foto gagal dimuat',
-                              style: TextStyle(color: Colors.grey)),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _LaporanFoto(url: laporan.fotoUrl!),
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(

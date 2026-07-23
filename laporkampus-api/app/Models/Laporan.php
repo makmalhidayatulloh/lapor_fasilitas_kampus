@@ -39,18 +39,11 @@ class Laporan extends Model
             return null;
         }
 
-        // Diarahkan ke route /foto/{path} (lihat routes/api.php), BUKAN ke
-        // /storage/{path} (symlink). Alasannya: `php artisan serve` (PHP
-        // built-in server) menolak (403 Forbidden) file yang diakses lewat
-        // symbolic link, jadi jalur /storage/... tidak bisa diandalkan di
-        // environment ini. Route /foto/{path} men-serve file yang sama
-        // tapi lewat Laravel langsung, jadi tetap jalan di php artisan
-        // serve maupun web server lain (Apache/Nginx/dll).
-        //
-        // Host-nya tetap diambil dari request yang sedang berjalan (bukan
-        // APP_URL statis di .env), supaya otomatis benar walau URL ngrok
-        // berubah tiap kali di-restart.
         $host = request()?->getSchemeAndHttpHost() ?? rtrim(config('app.url'), '/');
+
+        // Paksa https, karena ngrok selalu publik lewat https meski request
+        // internal ke Laravel kadang terbaca sebagai http.
+        $host = preg_replace('/^http:/', 'https:', $host);
 
         return $host . '/api/foto/' . $this->foto_path;
     }
