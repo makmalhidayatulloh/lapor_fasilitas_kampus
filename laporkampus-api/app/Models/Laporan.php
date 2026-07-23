@@ -35,6 +35,25 @@ class Laporan extends Model
     // URL publik lengkap ke foto, dipakai Flutter untuk menampilkan gambar
     public function getFotoUrlAttribute(): ?string
     {
-        return $this->foto_path ? Storage::disk('public')->url($this->foto_path) : null;
+        if (! $this->foto_path) {
+            return null;
+        }
+
+        // Storage::disk('public')->url() membangun URL memakai APP_URL di .env
+        // (mis. "http://localhost/storage/xxx.jpg"). Masalahnya, "localhost"
+        // itu valid buat browser di laptop kamu, tapi TIDAK valid untuk HP
+        // fisik yang mengakses API lewat tunnel ngrok — di HP, "localhost"
+        // artinya HP itu sendiri, bukan laptop kamu. Makanya foto gagal
+        // dimuat walau data lain (judul, deskripsi, dst) tetap tampil normal.
+        //
+        // Solusinya: ambil path relatifnya saja ("/storage/xxx.jpg"), lalu
+        // tempelkan ke host yang BENAR-BENAR sedang dipakai untuk mengakses
+        // API saat itu (otomatis terbaca dari request masuk, jadi tetap
+        // benar walau URL ngrok berubah setiap kali kamu restart ngrok,
+        // tanpa perlu edit APP_URL manual tiap saat).
+        $path = parse_url(Storage::disk('public')->url($this->foto_path), PHP_URL_PATH);
+        $host = request()?->getSchemeAndHttpHost() ?? rtrim(config('app.url'), '/');
+
+        return $host . $path;
     }
 }
