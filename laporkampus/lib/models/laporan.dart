@@ -47,7 +47,12 @@ class Laporan {
       kategoriNama: json['kategori']['nama'],
       kategoriId: json['kategori']['id'],
       pelaporNama: json['pelapor']['nama'],
-      createdAt: DateTime.parse(json['created_at']),
+      // Server (Laravel) mengirim created_at dalam UTC (config timezone=UTC).
+      // Tanpa .toLocal(), DateTime.parse akan menampilkan jam UTC apa adanya,
+      // sehingga waktu yang tampil di layar meleset dari jam asli perangkat
+      // (mis. selisih 7 jam untuk WIB). .toLocal() mengubahnya ke waktu
+      // perangkat pengguna supaya "waktu realtime" akurat.
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
     );
   }
 }
