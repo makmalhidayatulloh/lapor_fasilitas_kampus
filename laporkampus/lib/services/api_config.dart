@@ -4,9 +4,9 @@ class ApiConfig {
   // - HP fisik / iOS Simulator -> gunakan IP lokal komputer, misal 192.168.1.10
   // - Server production -> ganti dengan domain asli, misal https://api.lapor-fasilkam.my.id
   static const String baseUrl =
-      'https://pushup-daringly-startup.ngrok-free.dev/api';
+      'https://unpicked-oblong-retying.ngrok-free.dev/api';
 
   // Base URL tanpa /api, dipakai untuk mengakses file storage (foto)
   static const String storageBaseUrl =
-      'https://pushup-daringly-startup.ngrok-free.dev';
+      'https://unpicked-oblong-retying.ngrok-free.dev/api';
 }

@@ -22,7 +22,7 @@ dependencies:
   camera: ^0.11.0+2
 
   # Ambil lokasi GPS otomatis
-  geolocator: ^12.0.0
+
 
   # Permintaan izin kamera & lokasi
   permission_handler: ^11.3.1

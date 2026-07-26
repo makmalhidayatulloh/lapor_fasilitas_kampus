@@ -111,10 +111,46 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
     });
   }
 
+  static const Map<String, String> _labelStatus = {
+    'pending': 'Menunggu',
+    'proses': 'Diproses',
+    'selesai': 'Selesai',
+  };
+
+  Future<void> _konfirmasiUbahStatus(String status) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Ubah Status Laporan'),
+        content: Text(
+            'Ubah status laporan ini menjadi "${_labelStatus[status] ?? status}"?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Ubah')),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _ubahStatus(status);
+    }
+  }
+
   Future<void> _ubahStatus(String status) async {
     setState(() => _updating = true);
     try {
       await _api.updateStatus(widget.laporanId, status);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Status berhasil diubah menjadi "${_labelStatus[status] ?? status}"')),
+        );
+      }
       _reload();
     } catch (e) {
       if (mounted) {
@@ -214,26 +250,6 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                         Text(laporan.lokasiText!),
                         const SizedBox(height: 16),
                       ],
-                      if (laporan.latitude != null &&
-                          laporan.longitude != null) ...[
-                        const Text('Koordinat GPS',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        InkWell(
-                          onTap: () {
-                            final url = Uri.parse(
-                              'https://maps.google.com/?q=${laporan.latitude},${laporan.longitude}',
-                            );
-                            // Catatan: gunakan package url_launcher untuk benar-benar membuka maps.
-                            debugPrint('Buka maps: $url');
-                          },
-                          child: Text(
-                            '${laporan.latitude!.toStringAsFixed(6)}, ${laporan.longitude!.toStringAsFixed(6)} (buka di Maps)',
-                            style: const TextStyle(color: Colors.blue),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
                       Text('Pelapor: ${laporan.pelaporNama}',
                           style: const TextStyle(color: Colors.grey)),
                       Text(
@@ -278,7 +294,8 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
   Widget _statusButton(String value, String label, String current) {
     final active = value == current;
     return ElevatedButton(
-      onPressed: (_updating || active) ? null : () => _ubahStatus(value),
+      onPressed:
+          (_updating || active) ? null : () => _konfirmasiUbahStatus(value),
       style: ElevatedButton.styleFrom(
         backgroundColor: active ? Colors.grey.shade300 : null,
       ),
