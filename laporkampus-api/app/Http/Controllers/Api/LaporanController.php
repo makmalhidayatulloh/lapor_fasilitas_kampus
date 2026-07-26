@@ -25,7 +25,7 @@ class LaporanController extends Controller
             $query->where('status', $request->status);
         }
 
-        $laporans = $query->paginate(10);
+        $laporans = $query->paginate(5);
 
         return LaporanResource::collection($laporans);
     }
