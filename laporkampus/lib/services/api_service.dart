@@ -14,6 +14,18 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+// Hasil daftar laporan beserta info halaman (server memberi 5 laporan/halaman).
+class LaporanPage {
+  final List<Laporan> items;
+  final int currentPage;
+  final int lastPage;
+  LaporanPage({
+    required this.items,
+    required this.currentPage,
+    required this.lastPage,
+  });
+}
+
 class ApiService {
   final SessionService _session = SessionService();
 
@@ -86,15 +98,23 @@ class ApiService {
 
   // ================= LAPORAN =================
 
-  Future<List<Laporan>> getLaporans({String? status}) async {
+  // Server mem-paginate 5 laporan per halaman (lihat LaporanController::index).
+  Future<LaporanPage> getLaporans({String? status, int page = 1}) async {
     final headers = await _authHeaders();
-    var url = '${ApiConfig.baseUrl}/laporans';
-    if (status != null) url += '?status=$status';
+    final params = <String, String>{'page': page.toString()};
+    if (status != null) params['status'] = status;
+    final url = Uri.parse('${ApiConfig.baseUrl}/laporans')
+        .replace(queryParameters: params);
 
-    final res = await http.get(Uri.parse(url), headers: headers);
+    final res = await http.get(url, headers: headers);
     final data = _decode(res);
     final List list = data['data'];
-    return list.map((e) => Laporan.fromJson(e)).toList();
+    final meta = data['meta'] ?? {};
+    return LaporanPage(
+      items: list.map((e) => Laporan.fromJson(e)).toList(),
+      currentPage: meta['current_page'] ?? page,
+      lastPage: meta['last_page'] ?? 1,
+    );
   }
 
   Future<Laporan> getLaporanDetail(int id) async {
@@ -110,8 +130,6 @@ class ApiService {
     required String deskripsi,
     required int kategoriId,
     String? lokasiText,
-    double? latitude,
-    double? longitude,
     required File foto,
   }) async {
     final headers = await _authHeaders();
@@ -123,8 +141,6 @@ class ApiService {
     request.fields['deskripsi'] = deskripsi;
     request.fields['kategori_id'] = kategoriId.toString();
     if (lokasiText != null) request.fields['lokasi_text'] = lokasiText;
-    if (latitude != null) request.fields['latitude'] = latitude.toString();
-    if (longitude != null) request.fields['longitude'] = longitude.toString();
 
     request.files.add(await http.MultipartFile.fromPath('foto', foto.path));
 
