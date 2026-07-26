@@ -21,10 +21,7 @@ dependencies:
   image_picker: ^1.1.2
   camera: ^0.11.0+2
 
-  # Ambil lokasi GPS otomatis
-
-
-  # Permintaan izin kamera & lokasi
+  # Permintaan izin kamera
   permission_handler: ^11.3.1
 
   # Simpan token login secara lokal & persisten (dipakai juga untuk dark mode)
@@ -38,5 +35,22 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
 
+  # Generator icon aplikasi (launcher icon) dari assets/icon/icon.png
+  flutter_launcher_icons: ^0.14.1
+
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/images/logo.png
+
+# Konfigurasi flutter_launcher_icons.
+# Cara pakai: jalankan `flutter pub get` lalu
+# `dart run flutter_launcher_icons` di terminal (folder laporkampus).
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#3F51B5"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  remove_alpha_ios: true
