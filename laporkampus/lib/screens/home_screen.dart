@@ -127,31 +127,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (data.isEmpty) {
                     return const Center(child: Text('Belum ada laporan.'));
                   }
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: data.length,
-                          itemBuilder: (context, i) {
-                            final laporan = data[i];
-                            return LaporanCard(
-                              laporan: laporan,
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => LaporanDetailScreen(
-                                          laporanId: laporan.id)),
-                                );
-                                _reload();
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                      if (result != null && result.lastPage > 1)
-                        _paginationBar(result),
-                    ],
+                  return ListView.builder(
+                    itemCount: data.length,
+                    itemBuilder: (context, i) {
+                      final laporan = data[i];
+                      return LaporanCard(
+                        laporan: laporan,
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => LaporanDetailScreen(
+                                    laporanId: laporan.id)),
+                          );
+                          _reload();
+                        },
+                      );
+                    },
                   );
                 },
               ),
@@ -173,6 +165,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (created == true) _reload();
               },
             ),
+      // Pagination ditaruh di bottomNavigationBar (bukan di dalam list) supaya
+      // Scaffold otomatis menggeser FAB ke atas dan tidak saling menimpa.
+      bottomNavigationBar: FutureBuilder<LaporanPage>(
+        future: _future,
+        builder: (context, snapshot) {
+          final result = snapshot.data;
+          if (result == null || result.lastPage <= 1) {
+            return const SizedBox.shrink();
+          }
+          return _paginationBar(result);
+        },
+      ),
     );
   }
 
@@ -189,31 +193,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Kontrol navigasi halaman (5 laporan per halaman, diatur di server).
+  // Ditaruh sebagai bottomNavigationBar supaya selalu nempel rapi di bawah
+  // dan tidak numpuk dengan FloatingActionButton "Lapor Kerusakan".
   Widget _paginationBar(LaporanPage result) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            tooltip: 'Halaman sebelumnya',
-            onPressed: result.currentPage > 1
-                ? () => _gantiHalaman(result.currentPage - 1)
-                : null,
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border(
+            top: BorderSide(color: Theme.of(context).dividerColor),
           ),
-          Text('Halaman ${result.currentPage} dari ${result.lastPage}'),
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
-            tooltip: 'Halaman berikutnya',
-            onPressed: result.currentPage < result.lastPage
-                ? () => _gantiHalaman(result.currentPage + 1)
-                : null,
-          ),
-        ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left),
+              tooltip: 'Halaman sebelumnya',
+              onPressed: result.currentPage > 1
+                  ? () => _gantiHalaman(result.currentPage - 1)
+                  : null,
+            ),
+            Text('Halaman ${result.currentPage} dari ${result.lastPage}',
+                style: Theme.of(context).textTheme.bodyMedium),
+            IconButton(
+              icon: const Icon(Icons.chevron_right),
+              tooltip: 'Halaman berikutnya',
+              onPressed: result.currentPage < result.lastPage
+                  ? () => _gantiHalaman(result.currentPage + 1)
+                  : null,
+            ),
+          ],
+        ),
       ),
     );
   }
